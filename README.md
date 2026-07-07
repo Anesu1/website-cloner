@@ -1,36 +1,38 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Website Cloner
 
-## Getting Started
+A simple Next.js UI for [ditto.site](https://www.ditto.site) — enter a public URL, get back a runnable codebase generated from what the page actually renders, and download it as a ZIP.
 
-First, run the development server:
+## Setup
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+1. Put your ditto API key in `.env.local`:
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+   ```
+   DTTO_API_KEY=dtto_live_...
+   ```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+   The key is only ever read server-side; it is never exposed to the browser.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+2. Install and run:
 
-## Learn More
+   ```bash
+   npm install
+   npm run dev
+   ```
 
-To learn more about Next.js, take a look at the following resources:
+3. Open http://localhost:3000, enter a URL, and click **Clone**. When the job finishes you'll see the generated file list and a **Download ZIP** button.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## How it works
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- `POST /api/clone` proxies to `POST https://api.ditto.site/v1/clones` and returns `{ jobId, status }`.
+- The page polls `GET /api/clone/[jobId]` every 3 seconds until the job succeeds or fails. On success it returns file metadata (paths, types, sizes).
+- `GET /api/clone/[jobId]/download` fetches the full result file map, writes text files and binary assets into a ZIP with jszip, and streams it back as `<site>.zip`.
 
-## Deploy on Vercel
+## Options
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+| Option    | Values                | Default    |
+| --------- | --------------------- | ---------- |
+| Mode      | single page / multi   | single     |
+| Styling   | tailwind / css        | tailwind   |
+| Framework | Next.js / Vite React  | next       |
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Set `DITTO_API_URL` in `.env.local` to point at a self-hosted ditto service (defaults to `https://api.ditto.site`).

@@ -1,0 +1,25 @@
+- main [ref=e2]:
+  - generic [ref=e3]:
+    - generic [ref=e4]:
+      - heading "Website Cloner" [level=1] [ref=e5]
+      - paragraph [ref=e6]: Enter a public URL and get back a runnable codebase, generated from what the page actually renders. Powered by ditto.site.
+    - generic [ref=e7]:
+      - generic [ref=e8]:
+        - textbox "https://example.com" [ref=e9]
+        - button "Clone" [disabled] [ref=e10]
+      - generic [ref=e11]:
+        - generic [ref=e12]:
+          - text: Mode
+          - combobox "Mode" [ref=e13]:
+            - option "Single page" [selected]
+            - option "Multi page"
+        - generic [ref=e14]:
+          - text: Styling
+          - combobox "Styling" [ref=e15]:
+            - option "Tailwind" [selected]
+            - option "CSS"
+        - generic [ref=e16]:
+          - text: Framework
+          - combobox "Framework" [ref=e17]:
+            - option "Next.js" [selected]
+            - option "Vite React"
