@@ -1,0 +1,31 @@
+- generic [active] [ref=e1]:
+  - main [ref=e2]:
+    - generic [ref=e3]:
+      - generic [ref=e4]:
+        - generic [ref=e5]:
+          - heading "Website Cloner" [level=1] [ref=e6]
+          - generic [ref=e9]: Checking backend…
+        - paragraph [ref=e10]: Enter a public URL and get back a runnable codebase, generated from what the page actually renders. Powered by ditto.site.
+      - generic [ref=e11]:
+        - generic [ref=e12]:
+          - textbox "https://example.com" [disabled] [ref=e13]
+          - button "Cloning…" [disabled] [ref=e14]
+        - generic [ref=e15]:
+          - generic [ref=e16]:
+            - text: Mode
+            - combobox "Mode" [disabled] [ref=e17]:
+              - option "Single page" [selected]
+              - option "Multi page"
+          - generic [ref=e18]:
+            - text: Styling
+            - combobox "Styling" [disabled] [ref=e19]:
+              - option "Tailwind" [selected]
+              - option "CSS"
+          - generic [ref=e20]:
+            - text: Framework
+            - combobox "Framework" [disabled] [ref=e21]:
+              - option "Next.js" [selected]
+              - option "Vite React"
+  - button "Open Next.js Dev Tools" [ref=e27] [cursor=pointer]:
+    - img [ref=e28]
+  - alert [ref=e31]

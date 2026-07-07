@@ -11,7 +11,7 @@ export async function GET(
   try {
     const job = await getJob(jobId);
 
-    if (job.status !== "succeeded") {
+    if (job.status !== "succeeded" && job.status !== "cached") {
       return NextResponse.json({
         jobId,
         status: job.status,

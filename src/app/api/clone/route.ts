@@ -30,7 +30,11 @@ export async function POST(request: Request) {
 
   try {
     const job = await startClone(url, options);
-    return NextResponse.json({ jobId: job.jobId, status: job.status });
+    // A cached or inline result means the clone is already done — no worker job
+    // to poll. Normalize so the client can go straight to the download step.
+    const status =
+      job.status === "cached" || job.files ? "succeeded" : job.status;
+    return NextResponse.json({ jobId: job.jobId, status });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Failed to start clone";
     return NextResponse.json({ error: message }, { status: 502 });

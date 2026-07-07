@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import BackendStatus from "@/components/BackendStatus";
 import CloneForm from "@/components/CloneForm";
 import JobStatus from "@/components/JobStatus";
 import FileList from "@/components/FileList";
@@ -19,6 +20,7 @@ const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export default function Home() {
   const [job, setJob] = useState<JobState>({ phase: "idle" });
+  const [backendUp, setBackendUp] = useState(false);
   // Incremented on every new submission so a stale poll loop knows to stop.
   const runRef = useRef(0);
 
@@ -29,8 +31,11 @@ export default function Home() {
   }, []);
 
   async function pollUntilDone(jobId: string, site: string, run: number) {
+    let firstCheck = true;
     while (runRef.current === run) {
-      await sleep(POLL_INTERVAL_MS);
+      // Check right away so fast jobs resolve without waiting a full interval.
+      if (!firstCheck) await sleep(POLL_INTERVAL_MS);
+      firstCheck = false;
       if (runRef.current !== run) return;
 
       let data: { status?: Status; files?: FileMeta[]; error?: string };
@@ -73,6 +78,15 @@ export default function Home() {
       if (!res.ok) throw new Error(data.error ?? `Failed to start clone (${res.status})`);
       if (runRef.current !== run) return;
 
+      if (data.status === "succeeded") {
+        // Cached/inline result — fetch the file list once, no polling needed.
+        const statusRes = await fetch(`/api/clone/${encodeURIComponent(data.jobId)}`);
+        const statusData = await statusRes.json();
+        if (runRef.current !== run) return;
+        setJob({ phase: "done", jobId: data.jobId, files: statusData.files ?? [], site });
+        return;
+      }
+
       setJob({ phase: "polling", jobId: data.jobId, status: data.status ?? "queued", site });
       await pollUntilDone(data.jobId, site, run);
     } catch (err) {
@@ -90,14 +104,17 @@ export default function Home() {
     <main className="flex-1 flex flex-col items-center px-6 py-16">
       <div className="w-full max-w-2xl flex flex-col gap-8">
         <header className="flex flex-col gap-2">
-          <h1 className="text-2xl font-semibold tracking-tight">Website Cloner</h1>
+          <div className="flex items-center justify-between">
+            <h1 className="text-2xl font-semibold tracking-tight">Website Cloner</h1>
+            <BackendStatus onChange={setBackendUp} />
+          </div>
           <p className="text-sm text-neutral-600 dark:text-neutral-400">
             Enter a public URL and get back a runnable codebase, generated from what
             the page actually renders. Powered by ditto.site.
           </p>
         </header>
 
-        <CloneForm disabled={busy} onSubmit={handleSubmit} />
+        <CloneForm disabled={busy || !backendUp} onSubmit={handleSubmit} />
 
         {job.phase === "starting" && <JobStatus status="queued" jobId="starting…" />}
 

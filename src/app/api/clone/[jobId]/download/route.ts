@@ -12,7 +12,7 @@ export async function GET(
 
   try {
     const result = await getResult(jobId);
-    if (result.status !== "succeeded" || !result.files) {
+    if ((result.status !== "succeeded" && result.status !== "cached") || !result.files) {
       return NextResponse.json(
         { error: `Clone is not ready to download (status: ${result.status})` },
         { status: 409 }
@@ -20,6 +20,7 @@ export async function GET(
     }
 
     const zip = new JSZip();
+    const remoteAssets: Array<{ path: string; url: string }> = [];
 
     for (const [path, file] of Object.entries(result.files)) {
       if (file.type === "text") {
@@ -27,13 +28,25 @@ export async function GET(
       } else if (file.content) {
         zip.file(path, file.content, { base64: true });
       } else if (file.url) {
-        const res = await fetchAsset(file.url);
-        if (!res.ok) {
-          throw new Error(`Failed to fetch asset ${path}: ${res.status}`);
-        }
-        zip.file(path, await res.arrayBuffer());
+        remoteAssets.push({ path, url: file.url });
       }
     }
+
+    // Fetch remote binary assets in parallel (bounded), not one-by-one.
+    const CONCURRENCY = 8;
+    let next = 0;
+    await Promise.all(
+      Array.from({ length: Math.min(CONCURRENCY, remoteAssets.length) }, async () => {
+        while (next < remoteAssets.length) {
+          const { path, url } = remoteAssets[next++];
+          const res = await fetchAsset(url);
+          if (!res.ok) {
+            throw new Error(`Failed to fetch asset ${path}: ${res.status}`);
+          }
+          zip.file(path, await res.arrayBuffer());
+        }
+      })
+    );
 
     const buffer = await zip.generateAsync({
       type: "nodebuffer",
